@@ -2,10 +2,82 @@ procedure main()
   while line:=read() do{
     line := copy(trim_white(line))
     write(line)
-    write("line length: ", *line)
-    correct(line)
+    if correct(line) then{
+      write("line original length: ", *line)
+      w:=map(Onp(line),"TF","10")
+      w:=if *(w**&lcase) ~=0 then Reduce(w) else map(Val(w,''),"10","TF")
+      write(w)
+      write("reduce line length: ", *w)
+    }
   }
 end
+
+procedure Reduce(w)
+  s := set()
+  f := 0
+  every v:=gen(*(w**&lcase)) do {
+    val := Val(w,v)
+    write(v,"  ",val)
+    if val == 1 then insert(s,v)
+    else f+:=1
+  }
+  if *s = 0 then return "F"
+  if f = 0 then return "T"
+  return "default"
+end
+
+procedure connect(s1,s2)
+	l:=0
+	every i:=1 to *s1 do{
+		if s1[i] ~== s2[i] then{
+			s1[i]:="-"
+			l+:=1
+		}
+	}
+	if l=1 then return s1
+end
+
+procedure reduce(s)
+	s2:=set()
+	c:=0
+	every v1:= !s do {
+		b:=0
+		every v2:=!s do
+			if(insert(s2,connect(v1,v2))) then b:=c:=1
+		if b=0 then insert(s2,v1)
+	}
+	return if c=1 then reduce(s2) else s2;
+end
+
+procedure Onp(w)
+	while w?:= 2(="(",tab(bal(")")),pos(-1))
+	every p := bal(">",,,w)
+	if \p then return Onp(w[1:p])||Onp(w[p+1:0])||w[p]
+	every p := bal(!'|&',,,w)
+	if \p then return Onp(w[1:p])||Onp(w[p+1:0])||w[p]
+	if w[1]=="~" then return w[2:0] || "~"
+	return w;
+end
+
+procedure Val(w,arg)
+	w:=map(w,cset(w)**&lcase,arg)
+	s:=[]
+	every el:=!w do
+		if el==!"01" then push(s,el)
+		else case el of {
+			"&" : push(s, iand(pop(s),pop(s)))
+			"|" : push(s, ior(pop(s),pop(s)))
+			">" : push(s, ior(pop(s),1-pop(s)))
+			"~" : push(s, 1-pop(s))
+		}
+	return pop(s)
+end
+
+procedure gen(n)
+	if n=0 then suspend ""
+	else suspend !"01" || gen(n-1)
+end
+
 
 procedure trim_white(line)
   return if i:=find(' ',line )  then line[1:i] || trim_white(line[i+1:0])
@@ -13,27 +85,17 @@ procedure trim_white(line)
 end
 
 procedure correct(line)
-  if line?{W()&pos(0)} then write("ok")
-  else write("error")
+  if line?{W()&pos(0)} then return
+  else{
+    write("ERROR")
+    fail
+  }
 end
-
-# w = s | s^w
-# s = c | c|s | c&s
-# c = i | i>c
-# i = lcase | (w) | ~i | T | F
 
 procedure W()
-  suspend S() | S() || ="^" || W()
-end
-
-procedure S()
-	suspend C() | C() || ="|" || S() | C() || ="&" || S()
+  suspend C() | (C() || =!"^|&>" || W())
 end
 
 procedure C()
-	suspend I() | I()|| =">" || C()
-end
-
-procedure I()
-	suspend =!&lcase | ="("||W()|| =")" | ="~"||I() | =!"TF"
+	suspend =!(&lcase++'TF') | (="(" || W() || =")") | (="~" || C())
 end
