@@ -1,11 +1,42 @@
 procedure main()
   while line:=read() do{
-    line := trim_white(line)
     write(line)
+    write("line length: ", *line)
+    line := copy(trim_white(line))
+    write(line)
+    write("line length: ", *line)
+    correct(line)
   }
 end
 
 procedure trim_white(line)
   return if i:=find(' ',line )  then line[1:i] || trim_white(line[i+1:0])
                                 else line
+end
+
+procedure correct(s)
+  write(s)
+  if s?{w()&pos(0)} then write("ok")
+  else write("error")
+end
+
+# w = s | s^w
+# s = c | c|s | c&s
+# c = i | i>c
+# i = lcase | (w) | ~i | T | F
+
+procedure w()
+  suspend s() | s() || ="^" || w()
+end
+
+procedure s()
+	suspend c() | c() || ="|" || s() | c() || ="&" || s()
+end
+
+procedure c()
+	suspend i() | i()|| =">" || c()
+end
+
+procedure i()
+	suspend =!&lcase | ="("||w()|| =")" | ="~"||i() | =!"TF"
 end
