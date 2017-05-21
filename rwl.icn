@@ -1,0 +1,5 @@
+procedure main()
+  while w:=read() do{
+    write(w)
+  }
+end
