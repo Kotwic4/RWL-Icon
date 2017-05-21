@@ -3,11 +3,11 @@ procedure main()
     line := copy(trim_white(line))
     write(line)
     if correct(line) then{
-      write("line original length: ", *line)
+      #write("line original length: ", *line)
       w:=map(Onp(line),"TF","10")
       w:=if *(w**&lcase) ~=0 then Reduce(w) else map(Val(w,''),"10","TF")
       write(w)
-      write("reduce line length: ", *w)
+      #write("reduce line length: ", *w)
     }
   }
 end
@@ -17,13 +17,31 @@ procedure Reduce(w)
   f := 0
   every v:=gen(*(w**&lcase)) do {
     val := Val(w,v)
-    write(v,"  ",val)
     if val == 1 then insert(s,v)
     else f+:=1
   }
   if *s = 0 then return "F"
   if f = 0 then return "T"
-  return "default"
+  s2 := reduceSet(s)
+  return evalueteSet(s1,s2)
+end
+
+procedure evalueteSet(s1,s2)
+  w:=""
+  every line:=!s2 do{
+    if w ~== "" then w||:="|"
+    i:=97
+    temp := ""
+    every e:=!line do{
+      if e ~== '-' then {
+        if temp ~== "" then temp||:="&"
+        temp||:=char(i)
+      }
+      i+:=1
+    }
+    w||:=temp
+  }
+  return w
 end
 
 procedure connect(s1,s2)
@@ -37,7 +55,7 @@ procedure connect(s1,s2)
 	if l=1 then return s1
 end
 
-procedure reduce(s)
+procedure reduceSet(s)
 	s2:=set()
 	c:=0
 	every v1:= !s do {
@@ -46,7 +64,7 @@ procedure reduce(s)
 			if(insert(s2,connect(v1,v2))) then b:=c:=1
 		if b=0 then insert(s2,v1)
 	}
-	return if c=1 then reduce(s2) else s2;
+	return if c=1 then reduceSet(s2) else s2;
 end
 
 procedure Onp(w)
