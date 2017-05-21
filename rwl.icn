@@ -1,5 +1,11 @@
 procedure main()
-  while w:=read() do{
-    write(w)
+  while line:=read() do{
+    line := trim_white(line)
+    write(line)
   }
+end
+
+procedure trim_white(line)
+  return if i:=find(' ',line )  then line[1:i] || trim_white(line[i+1:0])
+                                else line
 end
