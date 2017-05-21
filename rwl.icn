@@ -1,7 +1,5 @@
 procedure main()
   while line:=read() do{
-    write(line)
-    write("line length: ", *line)
     line := copy(trim_white(line))
     write(line)
     write("line length: ", *line)
@@ -14,9 +12,8 @@ procedure trim_white(line)
                                 else line
 end
 
-procedure correct(s)
-  write(s)
-  if s?{w()&pos(0)} then write("ok")
+procedure correct(line)
+  if line?{W()&pos(0)} then write("ok")
   else write("error")
 end
 
@@ -25,18 +22,18 @@ end
 # c = i | i>c
 # i = lcase | (w) | ~i | T | F
 
-procedure w()
-  suspend s() | s() || ="^" || w()
+procedure W()
+  suspend S() | S() || ="^" || W()
 end
 
-procedure s()
-	suspend c() | c() || ="|" || s() | c() || ="&" || s()
+procedure S()
+	suspend C() | C() || ="|" || S() | C() || ="&" || S()
 end
 
-procedure c()
-	suspend i() | i()|| =">" || c()
+procedure C()
+	suspend I() | I()|| =">" || C()
 end
 
-procedure i()
-	suspend =!&lcase | ="("||w()|| =")" | ="~"||i() | =!"TF"
+procedure I()
+	suspend =!&lcase | ="("||W()|| =")" | ="~"||I() | =!"TF"
 end
