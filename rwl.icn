@@ -1,7 +1,7 @@
 procedure main()
   while line:=read() do{
     line := copy(trim_white(line))
-    write(line)
+    #write(line)
     if correct(line) then{
       #write("line original length: ", *line)
       w:=map(Onp(line),"TF","10")
@@ -29,12 +29,14 @@ end
 procedure evalueteSet(s1,s2)
   w:=""
   every line:=!s2 do{
+    write(line)
     if w ~== "" then w||:="|"
     i:=97
     temp := ""
     every e:=!line do{
       if e ~== '-' then {
         if temp ~== "" then temp||:="&"
+        if e == "0" then temp||:="~"
         temp||:=char(i)
       }
       i+:=1
@@ -73,7 +75,9 @@ procedure Onp(w)
 	if \p then return Onp(w[1:p])||Onp(w[p+1:0])||w[p]
 	every p := bal(!'|&',,,w)
 	if \p then return Onp(w[1:p])||Onp(w[p+1:0])||w[p]
-	if w[1]=="~" then return w[2:0] || "~"
+  every p := bal('^',,,w)
+	if \p then return Onp(w[1:p])||Onp(w[p+1:0])||w[p]
+	if w[1]=="~" then return Onp(w[2:0]) || "~"
 	return w;
 end
 
@@ -87,6 +91,7 @@ procedure Val(w,arg)
 			"|" : push(s, ior(pop(s),pop(s)))
 			">" : push(s, ior(pop(s),1-pop(s)))
 			"~" : push(s, 1-pop(s))
+      "^" : push(s, ixor(pop(s),pop(s)))
 		}
 	return pop(s)
 end
