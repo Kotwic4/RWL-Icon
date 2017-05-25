@@ -14,7 +14,6 @@ procedure main()
       onp_line:=map(Onp(line),"TF","10")
       new_line:=if *(onp_line**&lcase) ~=0 then Reduce(onp_line)
                                            else map(Val(onp_line,''),"10","TF")
-      write(new_line)
       if *new_line > *line then write(line)
                            else write(new_line)
     }
@@ -36,24 +35,50 @@ procedure Reduce(line)
   if *s1 = 0 then return "F"
   if f = 0 then return "T"
   s1 := ReduceSet(s1)
-  every v1:=!s1 do write(v1)
+
+  # find ^
   s2:=set()
   every v1:=!s1 do {
     every v2:=!s1 do{
       if (v1 ~== v2 & member(s1,v1) & member(s1,v2) ) then {
         diff:=0
-        le:=[]
-        ri:=[]
+        l:=[]
+        r:=[]
         every i:=1 to *v1 do{
-          if v1[i] == "0" & v2[i] == "1" then push(le,i)
-          if v1[i] == "1" & v2[i] == "0" then push(ri,i)
+          if v1[i] == "0" & v2[i] == "1" then push(l,i)
+          if v1[i] == "1" & v2[i] == "0" then push(r,i)
           if v1[i] ~== v2[i] then diff+:=1
         }
-        if (*le>0 & *ri>0 & diff = *le + *ri) then{
+        if (*l>0 & *r>0 & diff = *l + *r) then{
           delete(s1,v1)
           delete(s1,v2)
-          every i:=!le do v1[i] := "L"
-          every i:=!ri do v1[i] := "R"
+          every i:=!l do v1[i] := "L"
+          every i:=!r do v1[i] := "R"
+          insert(s2,v1)
+        }
+      }
+    }
+  }
+
+  # find >
+  s1:=s1++s2
+  s2:=set()
+  every v1:=!s1 do {
+    every v2:=!s1 do{
+      if (v1 ~== v2 & member(s1,v1) & member(s1,v2) ) then {
+        diff:=0
+        l:=[]
+        r:=[]
+        every i:=1 to *v1 do{
+          if v1[i] == "0" & v2[i] == "-" then push(l,i)
+          if v1[i] == "-" & v2[i] == "1" then push(r,i)
+          if v1[i] ~== v2[i] then diff+:=1
+        }
+        if (*l>0 & *r>0 & diff = *l + *r) then{
+          delete(s1,v1)
+          delete(s1,v2)
+          every i:=!l do v1[i] := "l"
+          every i:=!r do v1[i] := "r"
           insert(s2,v1)
         }
       }
@@ -69,6 +94,8 @@ procedure SetToString(s,arg)
   new_line:=""
   every line:=!s do{
     if *new_line > 0 then new_line||:="|"
+
+    # parse ^
     temp := ""
     l:=[]
     r:=[]
@@ -93,16 +120,69 @@ procedure SetToString(s,arg)
       if *r > 1 then tempR:="("|| tempR ||")"
       temp:= tempL || "^" || tempR
     }
+
+    change:=0
+
+    # parse 0
     i:=1
+    temp0:=""
     every e:=!line do{
-      if e == !'01' then {
-        if *temp > 0 then temp||:="&"
-        if e == "0" then temp||:="~"
-        temp||:=arg[i]
+      if e == '0' then {
+        if *temp0 > 0 then temp0||:="|"
+        temp0||:=arg[i]
       }
       i+:=1
     }
-    if (*temp > 2 & *s > 1) then temp:= "(" || temp || ")"
+    if *temp0 > 0 then {
+      if *temp0 > 1 then temp0:= "("|| temp0 ||")"
+      if *temp > 0 then{
+        temp||:="&"
+        change:=1
+      }
+      temp||:= "~" || temp0
+    }
+
+    # parse 1
+    i:=1
+    every e:=!line do{
+      if e == '1' then {
+        if *temp > 0 then temp||:="&"
+        temp||:=arg[i]
+        change:=1
+      }
+      i+:=1
+    }
+
+    # parse >
+    l:=[]
+    r:=[]
+    i:=1
+    every e:=!line do{
+      if e == 'l' then push(l,i)
+      if e == 'r' then push(r,i)
+      i+:=1
+    }
+    if *l > 0 then{
+      tempL:=""
+      tempR:=""
+      every e:=!l do{
+        if *tempL > 0 then tempL||:="&"
+        tempL||:=arg[e]
+      }
+      if *l > 1 then tempL:="("|| tempL ||")"
+      every e:=!r do{
+        if *tempR > 0 then tempR||:="&"
+        tempR||:=arg[e]
+      }
+      if *r > 1 then tempR:="("|| tempR ||")"
+      tempI:= tempL || ">" || tempR
+      if *temp > 0 then tempI:= "(" || tempI || ")"
+      temp||:=tempI
+      change:=1
+    }
+
+    # conncet to all
+    if (change = 1 & *temp > 2 & *s > 1) then temp:= "(" || temp || ")"
     new_line||:=temp
   }
   return new_line
