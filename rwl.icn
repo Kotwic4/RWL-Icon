@@ -14,6 +14,7 @@ procedure main()
       onp_line:=map(Onp(line),"TF","10")
       new_line:=if *(onp_line**&lcase) ~=0 then Reduce(onp_line)
                                            else map(Val(onp_line,''),"10","TF")
+      write(new_line)
       if *new_line > *line then write(line)
                            else write(new_line)
     }
@@ -26,16 +27,40 @@ end
 ################################################################################
 
 procedure Reduce(line)
-  s := set()
+  s1 := set()
   f := 0
   every v:=Gen(*(line**&lcase)) do {
     val := Val(line, v)
-    if val == 1 then insert(s, v) else f+:=1
+    if val == 1 then insert(s1, v) else f+:=1
   }
-  if *s = 0 then return "F"
+  if *s1 = 0 then return "F"
   if f = 0 then return "T"
-  s := ReduceSet(s)
-  return SetToString(s,line**&lcase)
+  s1 := ReduceSet(s1)
+  every v1:=!s1 do write(v1)
+  s2:=set()
+  every v1:=!s1 do {
+    every v2:=!s1 do{
+      if (v1 ~== v2 & member(s1,v1) & member(s1,v2) ) then {
+        diff:=0
+        le:=[]
+        ri:=[]
+        every i:=1 to *v1 do{
+          if v1[i] == "0" & v2[i] == "1" then push(le,i)
+          if v1[i] == "1" & v2[i] == "0" then push(ri,i)
+          if v1[i] ~== v2[i] then diff+:=1
+        }
+        if (*le>0 & *ri>0 & diff = *le + *ri) then{
+          delete(s1,v1)
+          delete(s1,v2)
+          every i:=!le do v1[i] := "L"
+          every i:=!ri do v1[i] := "R"
+          insert(s2,v1)
+        }
+      }
+    }
+  }
+  s1:=s1++s2
+  return SetToString(s1,line**&lcase)
 end
 
 procedure SetToString(s,arg)
@@ -43,12 +68,35 @@ procedure SetToString(s,arg)
   #every c:=!cs do put(arg,c)
   new_line:=""
   every line:=!s do{
-    if new_line ~== "" then new_line||:="|"
-    i:=1
+    if *new_line > 0 then new_line||:="|"
     temp := ""
+    l:=[]
+    r:=[]
+    i:=1
     every e:=!line do{
-      if e ~== '-' then {
-        if temp ~== "" then temp||:="&"
+      if e == 'L' then push(l,i)
+      if e == 'R' then push(r,i)
+      i+:=1
+    }
+    if *l > 0 then{
+      tempL:=""
+      tempR:=""
+      every e:=!l do{
+        if *tempL > 0 then tempL||:="&"
+        tempL||:=arg[e]
+      }
+      if *l > 1 then tempL:="("|| tempL ||")"
+      every e:=!r do{
+        if *tempR > 0 then tempR||:="&"
+        tempR||:=arg[e]
+      }
+      if *r > 1 then tempR:="("|| tempR ||")"
+      temp:= tempL || "^" || tempR
+    }
+    i:=1
+    every e:=!line do{
+      if e == !'01' then {
+        if *temp > 0 then temp||:="&"
         if e == "0" then temp||:="~"
         temp||:=arg[i]
       }
@@ -65,15 +113,20 @@ end
 ################################################################################
 
 procedure ReduceSet(s1)
-	s2:=set()
-	change:=0
-	every v1:=!s1 do {
-		change2:=0
-		every v2:=!s1 do
-			if insert(s2, Connect(v1, v2)) then change2:=change:=1
-		if change2=0 then insert(s2, v1)
-	}
-	return if change=1 then ReduceSet(s2) else s2;
+  change:=1
+  s2:=s1
+  while change = 1 do{
+      s1:=s2
+      s2:=set()
+      change:=0
+    	every v1:=!s1 do {
+    		change2:=0
+    		every v2:=!s1 do
+    			if insert(s2, Connect(v1, v2)) then change2:=change:=1
+    		if change2=0 then insert(s2, v1)
+    	}
+  }
+	return s2;
 end
 
 procedure Connect(s1,s2)
